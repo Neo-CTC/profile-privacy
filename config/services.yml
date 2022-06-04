@@ -1,0 +1,20 @@
+services:
+    crosstimecafe.profileprivacy.controller.ucp:
+        class: crosstimecafe\profileprivacy\controller\ucp_controller
+        arguments:
+            - '@dbal.conn'
+            - '@language'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@profilefields.manager'
+            - '@dbal.tools'
+
+    crosstimecafe.profileprivacy.listener:
+        class: crosstimecafe\profileprivacy\event\main_listener
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@dbal.tools'
+        tags:
+            - { name: event.listener }

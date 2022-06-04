@@ -1,0 +1,50 @@
+{% include 'ucp_header.html' %}
+
+<form id="crosstimecafe_profileprivacy_ucp" name="crosstimecafe_profileprivacy_ucp" method="post" action="{{ U_UCP_ACTION }}">
+
+	<h2>{{ lang('SETTINGS') }}</h2>
+
+	<div class="panel">
+		<div class="inner">
+			<fieldset>
+				{% if S_ERROR %}
+					<p class="error">{{ ERROR_MSG }}</p>
+				{% endif %}
+				<table class="table1 responsive">
+					<thead>
+						<tr>
+							<th>Field</th>
+							<th>All</th>
+							<th>Members</th>
+							<th>Friends</th>
+							<th>None</th>
+						</tr>
+					</thead>
+					<tbody>
+					<!-- BEGIN profile_fields -->
+						<tr class="<!-- IF profile_fields.S_ROW_COUNT is odd -->bg1<!-- ELSE -->bg2<!-- ENDIF -->">
+							<td>{profile_fields.LANG_NAME}</td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="0" {% if profile_fields.FIELD_SETTING == 0 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="1" {% if profile_fields.FIELD_SETTING == 1 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="2" {% if profile_fields.FIELD_SETTING == 2 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="3" {% if profile_fields.FIELD_SETTING == 3 %}checked{% endif %}></td>
+						</tr>
+					<!-- END profile_fields -->
+					</tbody>
+				</table>
+
+			</fieldset>
+		</div>
+	</div>
+	<fieldset>
+		<dl>
+			<dt>&nbsp;</dt>
+			<dd><input type="submit" name="submit" id="submit" class="button1" value="{{ lang('SUBMIT') }}" tabindex="2" />&nbsp;
+				<input type="reset" name="reset" class="button2" value="{{ lang('RESET') }}" /></dd>
+		</dl>
+		{{ S_HIDDEN_FIELDS }}
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% include 'ucp_footer.html' %}
