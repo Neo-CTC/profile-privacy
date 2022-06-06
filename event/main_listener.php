@@ -15,6 +15,7 @@ namespace crosstimecafe\profileprivacy\event;
  */
 
 use phpbb\user;
+use phpbb\auth\auth;
 use phpbb\db\driver\driver_interface;
 use phpbb\db\tools\tools_interface;
 
@@ -31,19 +32,24 @@ class main_listener implements EventSubscriberInterface
 	        'core.grab_profile_fields_data'	=> 'filter_profile_fields',
             'core.acp_profile_create_edit_save_before' => 'modify_profile_columns',
             'core.ucp_profile_modify_profile_info' => 'create_profile_entry',
-            // Todo add new event to phpBB
+            // Todo we need a new event for phpBB
             // 'core.acp_profile_delete_before' => 'delete_profile_columns',
+            // But until then, we'll double check for deleted columns on each visit the the acp profile page
+            'core.acp_profile_action' => 'check_columns',
 		];
 	}
 
     protected $db;
+    protected $db_tools;
     protected $user;
+    protected $auth;
     protected $table;
 
-    public function __construct(driver_interface $db, user $user, tools_interface $tools)
+    public function __construct(driver_interface $db, user $user, auth $auth, tools_interface $tools)
 	{
         $this->db       = $db;
         $this->user     = $user;
+        $this->auth     = $auth;
         $this->db_tools = $tools;
 
         global $table_prefix;
@@ -52,9 +58,24 @@ class main_listener implements EventSubscriberInterface
 
 	public function filter_profile_fields($event)
 	{
-        $self_uid    = $this->user->id();
-        $user_ids    = $event['user_ids'];
-        $user_fields = $event['field_data'];
+        // Show everything to mods & admins
+        if($this->auth->acl_gets('a_', 'm_') || !$this->auth->acl_getf_global('m_'))
+        {
+            return;
+        }
+
+        // Get user id for registered members and skip bots
+        if($this->user->data['is_registered'] && !$this->user->data['is_bot'])
+        {
+            $self_uid = $this->user->id();
+        }
+        else
+        {
+            $self_uid = 1;
+        }
+
+        $user_ids   = $event['user_ids'];
+
 
         //Fetch user privacy settings for all users on page
         $sql = 'SELECT * 
@@ -67,7 +88,7 @@ class main_listener implements EventSubscriberInterface
         {
             $uid = $row['user_id'];
 
-            // Skip if view own profile
+            // Skip if viewing own profile
             if($self_uid == $uid){
                 continue;
             }
@@ -101,7 +122,7 @@ class main_listener implements EventSubscriberInterface
 
                         // Members
                         case 1:
-                            if($self_uid == 1)
+                            if($self_uid === 1)
                             {
                                 $fd = $event['field_data'];
                                 $fd[$uid][$key] = '';
@@ -111,7 +132,7 @@ class main_listener implements EventSubscriberInterface
 
                         // Friends
                         case 2:
-                            if($is_friend_of === 1)
+                            if($is_friend_of !== 1)
                             {
                                 $fd = $event['field_data'];
                                 $fd[$uid][$key] = '';
@@ -189,6 +210,17 @@ class main_listener implements EventSubscriberInterface
         if($action == 'create')
         {
             $this->db_tools->sql_column_add($this->table,'pf_' . $fid,['UINT',1]);
+        }
+    }
+
+    public function check_columns($event)
+    {
+        $phpbb_columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
+        $my_columns = $this->db_tools->sql_list_columns($this->table);
+        $extra_columns = array_diff($my_columns,$phpbb_columns);
+        foreach($extra_columns as $column)
+        {
+            $this->db_tools->sql_column_remove($this->table,$column);
         }
     }
 }

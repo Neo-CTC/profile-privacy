@@ -15,6 +15,7 @@ services:
         arguments:
             - '@dbal.conn'
             - '@user'
+            - '@auth'
             - '@dbal.tools'
         tags:
             - { name: event.listener }
