@@ -28,7 +28,7 @@ class main_info
 			'title'    => 'UCP_PROFILEPRIVACY_TITLE',
 			'modes'    => [
 				'settings' => [
-					'title' => 'UCP_PROFILEPRIVACY',
+					'title' => 'UCP_PROFILEPRIVACY_EDIT',
 					'auth'  => 'ext_crosstimecafe/profileprivacy',
 					'cat'   => ['UCP_PROFILE'],
 				],

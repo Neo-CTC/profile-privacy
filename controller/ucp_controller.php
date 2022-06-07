@@ -102,7 +102,7 @@ class ucp_controller
 				// Option settings have been updated
 				// Confirm this to the user and provide (automated) link back to previous page
 				meta_refresh(3, $this->u_action);
-				$message = $this->language->lang('UCP_PROFILEPRIVACY_SAVED') . '<br /><br />' . $this->language->lang('RETURN_UCP', '<a href="' . $this->u_action . '">', '</a>');
+				$message = $this->language->lang('PREFERENCES_UPDATED') . '<br /><br />' . $this->language->lang('RETURN_UCP', '<a href="' . $this->u_action . '">', '</a>');
 				trigger_error($message);
 			}
 		}

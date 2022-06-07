@@ -35,9 +35,6 @@ if (empty($lang) || !is_array($lang))
 //
 
 $lang = array_merge($lang, [
-	'UCP_PROFILEPRIVACY'              => 'Settings',
-	'UCP_PROFILEPRIVACY_TITLE'        => 'Profile Privacy Module',
-	'UCP_PROFILEPRIVACY_USER'         => 'Profile Privacy user',
-	'UCP_PROFILEPRIVACY_USER_EXPLAIN' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-	'UCP_PROFILEPRIVACY_SAVED'        => 'Settings have been saved successfully!',
+	'UCP_PROFILEPRIVACY_EDIT'  => 'Edit profile privacy settings',
+	'UCP_PROFILEPRIVACY_TITLE' => 'Profile Privacy Module',
 ]);
