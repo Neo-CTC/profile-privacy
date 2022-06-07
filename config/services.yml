@@ -10,12 +10,26 @@ services:
             - '@profilefields.manager'
             - '@dbal.tools'
 
-    crosstimecafe.profileprivacy.listener:
-        class: crosstimecafe\profileprivacy\event\main_listener
+    crosstimecafe.profileprivacy.event.acp:
+        class: crosstimecafe\profileprivacy\event\acp_listener
+        arguments:
+            - '@dbal.tools'
+        tags:
+            - { name: event.listener }
+
+    crosstimecafe.profileprivacy.event.ucp:
+        class: crosstimecafe\profileprivacy\event\ucp_listener
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+        tags:
+            - { name: event.listener }
+
+    crosstimecafe.profileprivacy.event.general:
+        class: crosstimecafe\profileprivacy\event\general_listener
         arguments:
             - '@dbal.conn'
             - '@user'
             - '@auth'
-            - '@dbal.tools'
         tags:
             - { name: event.listener }
