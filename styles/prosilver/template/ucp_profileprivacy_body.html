@@ -2,32 +2,33 @@
 
 <form id="crosstimecafe_profileprivacy_ucp" name="crosstimecafe_profileprivacy_ucp" method="post" action="{{ U_UCP_ACTION }}">
 
-	<h2>{{ lang('SETTINGS') }}</h2>
+	<h2>{{ lang('UCP_PROFILEPRIVACY_EDIT') }}</h2>
 
 	<div class="panel">
 		<div class="inner">
 			<fieldset>
+				{{ lang('UCP_PROFILEPRIVACY_EXPLAIN') }}
 				{% if S_ERROR %}
 					<p class="error">{{ ERROR_MSG }}</p>
 				{% endif %}
 				<table class="table1 responsive">
 					<thead>
 						<tr>
-							<th>Field</th>
-							<th>All</th>
-							<th>Members</th>
-							<th>Friends</th>
-							<th>None</th>
+							<th>{{ lang('UCP_PROFILEPRIVACY_SETTING_FIELD') }}</th>
+							<th>{{ lang('UCP_PROFILEPRIVACY_SETTING_PUBLIC') }}</th>
+							<th>{{ lang('UCP_PROFILEPRIVACY_SETTING_MEMBERS') }}</th>
+							<th>{{ lang('UCP_PROFILEPRIVACY_SETTING_FRIENDS') }}</th>
+							<th>{{ lang('UCP_PROFILEPRIVACY_SETTING_HIDDEN') }}</th>
 						</tr>
 					</thead>
 					<tbody>
 					<!-- BEGIN profile_fields -->
 						<tr class="<!-- IF profile_fields.S_ROW_COUNT is odd -->bg1<!-- ELSE -->bg2<!-- ENDIF -->">
 							<td>{profile_fields.LANG_NAME}</td>
-							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="0" {% if profile_fields.FIELD_SETTING == 0 %}checked{% endif %}></td>
-							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="1" {% if profile_fields.FIELD_SETTING == 1 %}checked{% endif %}></td>
-							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="2" {% if profile_fields.FIELD_SETTING == 2 %}checked{% endif %}></td>
-							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" value="3" {% if profile_fields.FIELD_SETTING == 3 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_PUBLIC') }}" value="0" {% if profile_fields.FIELD_SETTING == 0 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_MEMBERS') }}" value="1" {% if profile_fields.FIELD_SETTING == 1 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_FRIENDS') }}" value="2" {% if profile_fields.FIELD_SETTING == 2 %}checked{% endif %}></td>
+							<td class="mark"><input type="radio" name="{profile_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_HIDDEN') }}" value="3" {% if profile_fields.FIELD_SETTING == 3 %}checked{% endif %}></td>
 						</tr>
 					<!-- END profile_fields -->
 					</tbody>
