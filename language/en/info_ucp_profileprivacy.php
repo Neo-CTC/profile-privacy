@@ -4,7 +4,7 @@
  * Profile Privacy. An extension for the phpBB Forum Software package.
  *
  * @copyright (c) 2022, Neo
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * @license       GNU General Public License, version 2 (GPL-2.0)
  *
  */
 
@@ -35,9 +35,9 @@ if (empty($lang) || !is_array($lang))
 //
 
 $lang = array_merge($lang, [
-	'UCP_PROFILEPRIVACY'				=> 'Settings',
-	'UCP_PROFILEPRIVACY_TITLE'		=> 'Profile Privacy Module',
-	'UCP_PROFILEPRIVACY_USER'			=> 'Profile Privacy user',
-	'UCP_PROFILEPRIVACY_USER_EXPLAIN'	=> 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-	'UCP_PROFILEPRIVACY_SAVED'		=> 'Settings have been saved successfully!',
+	'UCP_PROFILEPRIVACY'              => 'Settings',
+	'UCP_PROFILEPRIVACY_TITLE'        => 'Profile Privacy Module',
+	'UCP_PROFILEPRIVACY_USER'         => 'Profile Privacy user',
+	'UCP_PROFILEPRIVACY_USER_EXPLAIN' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+	'UCP_PROFILEPRIVACY_SAVED'        => 'Settings have been saved successfully!',
 ]);

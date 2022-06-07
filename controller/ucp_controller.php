@@ -4,7 +4,7 @@
  * Profile Privacy. An extension for the phpBB Forum Software package.
  *
  * @copyright (c) 2022, Neo
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * @license       GNU General Public License, version 2 (GPL-2.0)
  *
  */
 
@@ -28,25 +28,25 @@ class ucp_controller
 	protected $request;
 	protected $template;
 	protected $user;
-    protected $manager;
+	protected $manager;
 
-    protected $table;
+	protected $table;
 
 	protected $u_action;
-    private $db_tools;
+	private $db_tools;
 
 	public function __construct(driver_interface $db, language $language, request $request, template $template, user $user, manager $manager, tools_interface $tools)
 	{
-		$this->db		= $db;
-		$this->language	= $language;
-		$this->request	= $request;
-		$this->template	= $template;
-		$this->user		= $user;
-        $this->manager  = $manager;
-        $this->db_tools = $tools;
+		$this->db = $db;
+		$this->language = $language;
+		$this->request = $request;
+		$this->template = $template;
+		$this->user = $user;
+		$this->manager = $manager;
+		$this->db_tools = $tools;
 
-        global $table_prefix;
-        $this->table = $table_prefix . "profileprivacy";
+		global $table_prefix;
+		$this->table = $table_prefix . 'profileprivacy';
 	}
 
 	/**
@@ -71,33 +71,33 @@ class ucp_controller
 				$errors[] = $this->language->lang('FORM_INVALID');
 			}
 
-            $data = [];
+			$data = [];
 
-            // Load column names
-            $columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
+			// Load column names
+			$columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
 
-            // Loop over column names
-            foreach($columns as $column)
-            {
-                if($column == 'user_id')
-                {
-                    continue;
-                }
-                $v = $this->request->variable($column,1);
-                if($v < 0 or $v > 3)
-                {
-                    $v = 3;
-                }
-                $data[$column] = $v;
-            }
+			// Loop over column names
+			foreach ($columns as $column)
+			{
+				if ($column == 'user_id')
+				{
+					continue;
+				}
+				$v = $this->request->variable($column, 1);
+				if ($v < 0 or $v > 3)
+				{
+					$v = 3;
+				}
+				$data[$column] = $v;
+			}
 
 			// If no errors, process the form data
 			if (empty($errors))
 			{
-                $sql = 'UPDATE ' . $this->table . '
-                SET ' . $this->db->sql_build_array('UPDATE', $data) . '
-                WHERE user_id = ' . $this->user->id();
-                $this->db->sql_query($sql);
+				$sql = 'UPDATE ' . $this->table .
+					' SET ' . $this->db->sql_build_array('UPDATE', $data) .
+					' WHERE user_id = ' . $this->user->id();
+				$this->db->sql_query($sql);
 
 				// Option settings have been updated
 				// Confirm this to the user and provide (automated) link back to previous page
@@ -107,24 +107,24 @@ class ucp_controller
 			}
 		}
 
-        // Fetch all profile fields
-        $this->generate_profile_fields('profile',$this->user->get_iso_lang_id());
+		// Fetch all profile fields
+		$this->generate_profile_fields('profile', $this->user->get_iso_lang_id());
 
-        $s_errors = !empty($errors);
+		$s_errors = !empty($errors);
 
 		// Set output variables for display in the template
 		$this->template->assign_vars([
-			'S_ERROR'		=> $s_errors,
-			'ERROR_MSG'		=> $s_errors ? implode('<br />', $errors) : '',
+			'S_ERROR'   => $s_errors,
+			'ERROR_MSG' => $s_errors ? implode('<br />', $errors) : '',
 
-			'U_UCP_ACTION'	=> $this->u_action,
+			'U_UCP_ACTION' => $this->u_action,
 		]);
 	}
 
 	/**
 	 * Set custom form action.
 	 *
-	 * @param string	$u_action	Custom form action
+	 * @param string $u_action Custom form action
 	 * @return void
 	 */
 	public function set_page_url($u_action)
@@ -132,47 +132,44 @@ class ucp_controller
 		$this->u_action = $u_action;
 	}
 
-    // Recreating function from phpbb/profilefields/manager.php for finer control over template
-    public function generate_profile_fields($mode, $lang_id)
-    {
-        $sql_where = '';
-        // Show hidden fields to moderators/admins
-        // Todo don't forget to enable this
-//        if (!$this->auth->acl_gets('a_', 'm_') && !$this->auth->acl_getf_global('m_'))
-//        {
-            $sql_where .= ' AND f.field_show_profile = 1';
-//        }
+	/**
+	 * Generate the settings template
+	 * Recreating function from phpbb/profilefields/manager.php for finer control over template
+	 *
+	 * @param $mode
+	 * @param $lang_id
+	 * @return void
+	 */
+	public function generate_profile_fields($mode, $lang_id)
+	{
+		// Limit fields to only those that are visible. For admin and mods, the can already see all
+		// fields. Thus, I don't think they need to bypass the visibility here.
+		$sql_where = ' AND f.field_show_profile = 1';
 
-        // Fetch profile fields
-        $sql = 'SELECT l.*, f.*
-			FROM ' . PROFILE_LANG_TABLE . ' l, 
-				' . PROFILE_FIELDS_TABLE . ' f
-			WHERE l.field_id = f.field_id
-				AND f.field_active = 1
-				AND l.lang_id = ' . (int) $lang_id
-            . $sql_where . '
-			ORDER BY f.field_order ASC';
-        $result = $this->db->sql_query($sql);
+		// Fetch profile fields
+		$sql = 'SELECT l.*, f.*' .
+			' FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . ' f' .
+			' WHERE l.field_id = f.field_id AND f.field_active = 1 AND l.lang_id = ' . (int) $lang_id . $sql_where .
+			' ORDER BY f.field_order ASC';
+		$result = $this->db->sql_query($sql);
 
-        $fields = $this->db->sql_fetchrowset($result);
-        $this->db->sql_freeresult($result);
+		$fields = $this->db->sql_fetchrowset($result);
+		$this->db->sql_freeresult($result);
 
-        // Fetch current field settings
-        $sql = 'SELECT *
-				FROM ' . $this->table . '
-				WHERE user_id = ' . $this->user->id();
-        $result = $this->db->sql_query($sql);
-        $field_settings = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
+		// Fetch current field settings
+		$sql = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . $this->user->id();
+		$result = $this->db->sql_query($sql);
+		$field_settings = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
 
-        foreach($fields as $field)
-        {
-            $field['field_ident'] = 'pf_' . $field['field_ident'];
-            $this->template->assign_block_vars('profile_fields', [
-                'FIELD_ID'		=> $field['field_ident'],
-                'LANG_NAME'		=> $this->language->lang($field['lang_name']),
-                'FIELD_SETTING' => $field_settings[$field['field_ident']],
-            ]);
-        }
-    }
+		foreach ($fields as $field)
+		{
+			$field['field_ident'] = 'pf_' . $field['field_ident'];
+			$this->template->assign_block_vars('profile_fields', [
+				'FIELD_ID'      => $field['field_ident'],
+				'LANG_NAME'     => $this->language->lang($field['lang_name']),
+				'FIELD_SETTING' => $field_settings[$field['field_ident']],
+			]);
+		}
+	}
 }
