@@ -74,7 +74,7 @@ class ucp_controller
 			$data = [];
 
 			// Load column names
-			$columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
+			$columns = $this->db_tools->sql_list_columns($this->table);
 
 			// Loop over column names
 			foreach ($columns as $column)
@@ -108,7 +108,7 @@ class ucp_controller
 		}
 
 		// Fetch all profile fields
-		$this->generate_profile_fields('profile', $this->user->get_iso_lang_id());
+		$this->generate_profile_fields($this->user->get_iso_lang_id());
 
 		$s_errors = !empty($errors);
 
@@ -136,11 +136,10 @@ class ucp_controller
 	 * Generate the settings template
 	 * Recreating function from phpbb/profilefields/manager.php for finer control over template
 	 *
-	 * @param $mode
 	 * @param $lang_id
 	 * @return void
 	 */
-	public function generate_profile_fields($mode, $lang_id)
+	public function generate_profile_fields($lang_id)
 	{
 		// Limit fields to only those that are visible. For admin and mods, the can already see all
 		// fields. Thus, I don't think they need to bypass the visibility here.
@@ -161,6 +160,13 @@ class ucp_controller
 		$result = $this->db->sql_query($sql);
 		$field_settings = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
+
+		// But first, let's add in the option for controlling the age field on the view profile page
+		$this->template->assign_block_vars('profile_fields', [
+			'FIELD_ID'      => 'bday_age',
+			'LANG_NAME'     => $this->language->lang('BIRTHDAY'),
+			'FIELD_SETTING' => $field_settings['bday_age'],
+		]);
 
 		foreach ($fields as $field)
 		{

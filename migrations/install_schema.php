@@ -48,7 +48,8 @@ class install_schema extends migration
 			'add_tables' => [
 				$this->table_prefix . 'profileprivacy' => [
 					'COLUMNS'     => [
-						'user_id' => ['UINT', null],
+						'user_id'  => ['UINT', null],
+						'bday_age' => ['UINT', 1],
 					],
 					'PRIMARY_KEY' => 'user_id',
 				],
@@ -109,7 +110,7 @@ class install_schema extends migration
 		while ($row = $this->db->sql_fetchrow($result))
 		{
 			$users[] = [
-				'user_id' => $row['user_id']
+				'user_id' => $row['user_id'],
 			];
 		}
 		$this->db->sql_freeresult($result);
