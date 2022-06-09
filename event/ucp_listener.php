@@ -41,7 +41,7 @@ class ucp_listener implements EventSubscriberInterface
 		$this->user = $user;
 
 		global $table_prefix;
-		$this->table = $table_prefix . 'profileprivacy';
+		$this->table = $table_prefix . 'profile_privacy_ext';
 	}
 
 	/**

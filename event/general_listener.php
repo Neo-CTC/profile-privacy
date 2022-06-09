@@ -45,7 +45,7 @@ class general_listener implements EventSubscriberInterface
 		$this->auth = $auth;
 
 		global $table_prefix;
-		$this->table = $table_prefix . 'profileprivacy';
+		$this->table = $table_prefix . 'profile_privacy_ext';
 	}
 
 	/**

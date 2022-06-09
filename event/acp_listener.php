@@ -42,7 +42,7 @@ class acp_listener implements EventSubscriberInterface
 		$this->db_tools = $tools;
 
 		global $table_prefix;
-		$this->table = $table_prefix . 'profileprivacy';
+		$this->table = $table_prefix . 'profile_privacy_ext';
 	}
 
 	/**
@@ -74,6 +74,11 @@ class acp_listener implements EventSubscriberInterface
 		$extra_columns = array_diff($my_columns, $phpbb_columns);
 		foreach ($extra_columns as $column)
 		{
+			// Don't delete the birthday column
+			if ($column == 'bday_age')
+			{
+				continue;
+			}
 			$this->db_tools->sql_column_remove($this->table, $column);
 		}
 	}

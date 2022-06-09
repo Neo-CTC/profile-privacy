@@ -46,7 +46,7 @@ class ucp_controller
 		$this->db_tools = $tools;
 
 		global $table_prefix;
-		$this->table = $table_prefix . 'profileprivacy';
+		$this->table = $table_prefix . 'profile_privacy_ext';
 	}
 
 	/**

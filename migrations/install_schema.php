@@ -24,7 +24,7 @@ class install_schema extends migration
 	 */
 	public function effectively_installed()
 	{
-		return $this->db_tools->sql_table_exists($this->table_prefix . 'crosstimecafe_profileprivacy');
+		return $this->db_tools->sql_table_exists($this->table_prefix . 'profile_privacy_ext');
 	}
 
 	/**
@@ -46,7 +46,7 @@ class install_schema extends migration
 	{
 		return [
 			'add_tables' => [
-				$this->table_prefix . 'profileprivacy' => [
+				$this->table_prefix . 'profile_privacy_ext' => [
 					'COLUMNS'     => [
 						'user_id'  => ['UINT', null],
 						'bday_age' => ['UINT', 1],
@@ -66,7 +66,7 @@ class install_schema extends migration
 	{
 		return [
 			'drop_tables' => [
-				$this->table_prefix . 'profileprivacy',
+				$this->table_prefix . 'profile_privacy_ext',
 			],
 		];
 	}
@@ -98,28 +98,35 @@ class install_schema extends migration
 			{
 				continue;
 			}
-			$this->db_tools->sql_column_add($this->table_prefix . 'profileprivacy', $column, ['UINT', 1]);
+			$this->db_tools->sql_column_add($this->table_prefix . 'profile_privacy_ext', $column, ['UINT', 1]);
 		}
 
 
-		// Add defaults for users currently in data table
-		$sql = 'SELECT user_id FROM ' . PROFILE_FIELDS_DATA_TABLE; // Todo add limits in case of forum with 10,000's of users
+		// Get total count of users
+		$sql = 'SELECT COUNT(user_id) AS total FROM ' . PROFILE_FIELDS_DATA_TABLE;
 		$result = $this->db->sql_query($sql);
+		$count = $this->db->sql_fetchfield('total', 0, $result);
 
-		$users = [];
-		while ($row = $this->db->sql_fetchrow($result))
+		// Add defaults for users
+		for ($i = 0; $i < $count; $i += 500)
 		{
-			$users[] = [
-				'user_id' => $row['user_id'],
-			];
-		}
-		$this->db->sql_freeresult($result);
+			$sql = 'SELECT user_id FROM ' . PROFILE_FIELDS_DATA_TABLE;
+			$result = $this->db->sql_query_limit($sql, 500, $i);
 
-		if (!empty($users))
-		{
-			$this->db->sql_multi_insert($this->table_prefix . 'profileprivacy', $users);
-		}
+			$users = [];
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$users[] = [
+					'user_id' => $row['user_id'],
+				];
+			}
+			$this->db->sql_freeresult($result);
 
+			if (!empty($users))
+			{
+				$this->db->sql_multi_insert($this->table_prefix . 'profile_privacy_ext', $users);
+			}
+		}
 		return true;
 	}
 }
