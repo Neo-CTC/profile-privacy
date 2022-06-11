@@ -1,17 +1,17 @@
 {
     "name": "crosstimecafe/profileprivacy",
     "type": "phpbb-extension",
-    "description": "Place limits who can read you profile",
-    "homepage": "https://crosstimecafe.com",
+    "description": "Allows users to set access limits on their profile",
+    "homepage": "https://www.phpbb.com/community/viewtopic.php?t=2621912",
     "version": "0.1.0-dev",
-    "time": "2022-05-31",
+    "time": "2022-06-11",
     "license": "GPL-2.0-only",
     "authors": [
         {
             "name": "Neo",
             "email": "neo@crosstimecafe.com",
-            "homepage": "",
-            "role": ""
+            "homepage": "https://crosstimecafe.com",
+            "role": "Developer"
         }
     ],
     "require": {
