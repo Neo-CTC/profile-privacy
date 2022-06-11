@@ -58,6 +58,12 @@ class general_listener implements EventSubscriberInterface
 	 */
 	public function filter_profile_fields($event)
 	{
+		// Just in case
+		if (empty($event['user_ids']))
+		{
+			return;
+		}
+
 		// Show everything to mods & admins
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
@@ -268,6 +274,12 @@ class general_listener implements EventSubscriberInterface
 	 */
 	public function filter_age_front_page($event)
 	{
+		// If nothing, do nothing
+		if (empty($event['row']))
+		{
+			return;
+		}
+
 		// Show everything to mods & admins
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
