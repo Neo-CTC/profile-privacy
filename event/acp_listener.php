@@ -59,7 +59,7 @@ class acp_listener implements EventSubscriberInterface
 		// We only care about creating a field since the field identifier never changes
 		if ($action == 'create')
 		{
-			$this->db_tools->sql_column_add($this->table, 'pf_' . $fid, ['UINT', 1]);
+			$this->db_tools->sql_column_add($this->table, 'pf_' . $fid, ['UINT', 0]);
 		}
 	}
 

@@ -49,7 +49,7 @@ class install_schema extends migration
 				$this->table_prefix . 'profile_privacy_ext' => [
 					'COLUMNS'     => [
 						'user_id'  => ['UINT', null],
-						'bday_age' => ['UINT', 1],
+						'bday_age' => ['UINT', 0],
 					],
 					'PRIMARY_KEY' => 'user_id',
 				],
@@ -98,7 +98,7 @@ class install_schema extends migration
 			{
 				continue;
 			}
-			$this->db_tools->sql_column_add($this->table_prefix . 'profile_privacy_ext', $column, ['UINT', 1]);
+			$this->db_tools->sql_column_add($this->table_prefix . 'profile_privacy_ext', $column, ['UINT', 0]);
 		}
 
 
