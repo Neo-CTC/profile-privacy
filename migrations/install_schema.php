@@ -48,7 +48,7 @@ class install_schema extends migration
 			'add_tables' => [
 				$this->table_prefix . 'profile_privacy_ext' => [
 					'COLUMNS'     => [
-						'user_id'  => ['UINT', null],
+						'user_id'  => ['UINT', 0],
 						'bday_age' => ['UINT', 0],
 					],
 					'PRIMARY_KEY' => 'user_id',

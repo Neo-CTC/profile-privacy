@@ -275,7 +275,7 @@ class general_listener implements EventSubscriberInterface
 	public function filter_age_front_page($event)
 	{
 		// If nothing, do nothing
-		if (empty($event['row']))
+		if (empty($event['rows']))
 		{
 			return;
 		}
@@ -335,7 +335,7 @@ class general_listener implements EventSubscriberInterface
 			// Skip if viewing own profile
 			if ($user_id == $profile_id)
 			{
-				$new_data[] = $original_data['birthdays'][$index];
+				$new_data[] = $original_data[$index];
 				continue;
 			}
 
