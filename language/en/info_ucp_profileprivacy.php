@@ -27,4 +27,7 @@ $lang = array_merge($lang, [
 	'UCP_PROFILEPRIVACY_SETTING_MEMBERS' => 'Members',
 	'UCP_PROFILEPRIVACY_SETTING_FRIENDS' => 'Friends',
 	'UCP_PROFILEPRIVACY_SETTING_HIDDEN'  => 'Hidden',
+	'UCP_PROFILEPRIVACY_SETTING_ONLINE'  => 'Online activity',
+	'UCP_PROFILEPRIVACY_SETTING_BOARD'   => 'Board Settings',
+	'UCP_PROFILEPRIVACY_SETTING_PROFILE' => 'Profile Settings',
 ]);

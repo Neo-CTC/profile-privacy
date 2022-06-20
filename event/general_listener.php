@@ -10,8 +10,7 @@
 
 namespace crosstimecafe\profileprivacy\event;
 
-use Exception;
-use phpbb\log\log;
+use phpbb\db\tools\tools_interface;
 use phpbb\user;
 use phpbb\auth\auth;
 use phpbb\db\driver\driver_interface;
@@ -29,9 +28,13 @@ class general_listener implements EventSubscriberInterface
 	public static function getSubscribedEvents()
 	{
 		return [
-			'core.grab_profile_fields_data'        => 'filter_profile_fields',
-			'core.memberlist_prepare_profile_data' => 'filter_age',
-			'core.index_modify_birthdays_list'     => 'filter_age_front_page',
+			'core.grab_profile_fields_data'                 => 'filter_profile_fields',
+			'core.memberlist_prepare_profile_data'          => 'filter_age',
+			'core.index_modify_birthdays_list'              => 'filter_age_front_page',
+			'core.obtain_users_online_string_before_modify' => 'filter_online',
+			'core.viewtopic_modify_post_data'               => 'filter_online_topic_post',
+			'core.viewonline_modify_user_row'               => 'filter_online_view',
+
 		];
 	}
 
@@ -39,132 +42,52 @@ class general_listener implements EventSubscriberInterface
 	private $user;
 	private $auth;
 	private $table;
-	private $log;
+	private $uid;
+	private $db_tools;
 
-	public function __construct(driver_interface $db, user $user, auth $auth, log $log)
+	public function __construct(driver_interface $db, user $user, auth $auth, tools_interface $tools)
 	{
-		$this->db = $db;
-		$this->user = $user;
-		$this->auth = $auth;
-		$this->log = $log;
+		$this->db       = $db;
+		$this->user     = $user;
+		$this->auth     = $auth;
+		$this->db_tools = $tools;
 
 		global $table_prefix;
 		$this->table = $table_prefix . 'profile_privacy_ext';
+
+		$this->uid = ($this->user->data['is_registered'] && !$this->user->data['is_bot']) ? $this->user->id() : 1;
 	}
 
 	/**
+	 * Filters profile fields on both the view topic page and the view profile page
+	 *
 	 * @param $event
 	 * @return void
 	 */
 	public function filter_profile_fields($event)
 	{
-		// Just in case
-		if (empty($event['user_ids']))
-		{
-			return;
-		}
-
 		// Show everything to mods & admins
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
 			return;
 		}
 
-		// Get user id for registered members and skip bots
-		if ($this->user->data['is_registered'] && !$this->user->data['is_bot'])
+		$user_ids   = $event['user_ids'];
+		$fields     = $this->db_tools->sql_list_columns($this->table);
+		$field_data = $event['field_data'];
+
+		$acl = $this->access_control($user_ids, $fields);
+		foreach ($user_ids as $user_id)
 		{
-			$user_id = $this->user->id();
-		}
-		else
-		{
-			$user_id = 1;
-		}
-
-		// As a failsafe, clear all data, then reapply
-		$original_data = $event['field_data'];
-		$new_data = [];
-		$event['field_data'] = [];
-
-
-		// Fetch user privacy settings for all users on page
-		$sql = 'SELECT * FROM ' . $this->table . ' WHERE ' . $this->db->sql_in_set('user_id', $event['user_ids']);
-		try
-		{
-			$result = $this->run_sql($sql);
-		}
-		catch (Exception $exception)
-		{
-			// Exception failsafe; field data is already cleared; stop and return this way we don't crash the whole page
-			return;
-		}
-
-
-		// Each user
-		while ($row = $this->db->sql_fetchrow($result))
-		{
-			$profile_id = $row['user_id'];
-
-			// Copy everything if viewing own profile
-			if ($user_id == $profile_id)
+			foreach ($fields as $field)
 			{
-				$new_data[$profile_id] = $original_data[$profile_id];
-			}
-
-			// Does the profile we are viewing have the user listed as a friend?
-			$is_friend_of = $user_id != 1 ? $this->reverse_zebra($profile_id, $user_id) : 0;
-
-			// Each profile's privacy setting
-			foreach ($row as $field => $data)
-			{
-				if ($field == 'user_id')
+				if (!isset($acl[$user_id]) || !in_array($field, $acl[$user_id]))
 				{
-					continue;
-				}
-
-				// Hide everything from foes
-				// Todo might change this
-				if ($is_friend_of === -1)
-				{
-					continue;
-				}
-
-				else
-				{
-					switch ($data)
-					{
-						// Public
-						case 0:
-							$new_data[$profile_id][$field] = $original_data[$profile_id][$field];
-						break;
-
-						// Members
-						case 1:
-							if ($user_id > 1)
-							{
-								$new_data[$profile_id][$field] = $original_data[$profile_id][$field];
-							}
-						break;
-
-						// Friends
-						case 2:
-							if ($is_friend_of === 1)
-							{
-								$new_data[$profile_id][$field] = $original_data[$profile_id][$field];
-							}
-						break;
-
-						// Nobody
-						case 3:
-						default:
-						break;
-					}
+					$field_data[$user_id][$field] = '';
 				}
 			}
 		}
-		$this->db->sql_freeresult($result);
-
-		// Copy filtered data back into event space
-		$event['field_data'] = $new_data;
+		$event['field_data'] = $field_data;
 	}
 
 	/**
@@ -180,90 +103,14 @@ class general_listener implements EventSubscriberInterface
 		{
 			return;
 		}
-
-		// Get user id for registered members and skip bots
-		if ($this->user->data['is_registered'] && !$this->user->data['is_bot'])
-		{
-			$user_id = $this->user->id();
-		}
-		else
-		{
-			$user_id = 1;
-		}
-
 		$profile_id = $event['data']['user_id'];
-
-		// Skip if viewing own profile
-		if ($user_id == $profile_id)
+		$acl        = $this->access_control([$profile_id], ['bday_age']);
+		if (!isset($acl[$profile_id]))
 		{
-			return;
+			$template               = $event['template_data'];
+			$template['AGE']        = '';
+			$event['template_data'] = $template;
 		}
-
-		// As a failsafe, clear age, then reapply later
-		$original_data = $event['template_data']['AGE']; // Store for later use
-		$new_data = $event['template_data'];  // Copy overloaded array
-		$new_data['AGE'] = '';  // Now we can clear the age
-		$event['template_data'] = $new_data;  // Shove updated template back into overloaded event
-
-		// Fetch user privacy settings the one user
-		$sql = 'SELECT bday_age FROM ' . $this->table . ' WHERE user_id = ' . $profile_id;
-		try
-		{
-			$result = $this->run_sql($sql);
-		}
-		catch (Exception $exception)
-		{
-			return;
-		}
-		$value = $this->db->sql_fetchfield('bday_age', 0, $result);
-		$this->db->sql_freeresult($result);
-
-		if ($value !== false)
-		{
-			// Does the post author have the current user listed as a friend?
-			$is_friend_of = $user_id != 1 ? $this->reverse_zebra($profile_id, $user_id) : 0;
-
-			// Hide everything from foes
-			// Todo might change this
-			if ($is_friend_of === -1)
-			{
-				return;
-			}
-
-			else
-			{
-				switch ($value)
-				{
-					// Guest, field is open to all, do nothing
-					case 0:
-						$new_data['AGE'] = $original_data;
-					break;
-
-					// Members
-					case 1:
-						if ($user_id > 1)
-						{
-							$new_data['AGE'] = $original_data;
-						}
-					break;
-
-					// Friends
-					case 2:
-						if ($is_friend_of === 1)
-						{
-							$new_data['AGE'] = $original_data;
-						}
-					break;
-
-					// Nobody
-					case 3:
-					default:
-					break;
-				}
-			}
-		}
-		// One last copy of data into the overloaded array
-		$event['template_data'] = $new_data;
 	}
 
 	/**
@@ -286,177 +133,209 @@ class general_listener implements EventSubscriberInterface
 			return;
 		}
 
-		// Get user id for registered members and skip bots
-		if ($this->user->data['is_registered'] && !$this->user->data['is_bot'])
-		{
-			$user_id = $this->user->id();
-		}
-		else
-		{
-			$user_id = 1;
-		}
-
 		// Fetch user ids from list
 		$profile_ids = [];
-		foreach ($event['rows'] as $row)
+		$rows        = $event['rows'];
+		foreach ($rows as $row)
 		{
 			$profile_ids[] = $row['user_id'];
 		}
 
-		// As a failsafe, clear birthday list, then reapply later
-		$original_data = $event['birthdays'];
-		$new_data = [];
-		$event['birthdays'] = [];
+		$acl = $this->access_control($profile_ids, ['bday_age']);
 
-		// Fetch user privacy settings for users
-		$sql = 'SELECT user_id,bday_age FROM ' . $this->table . ' WHERE ' . $this->db->sql_in_set('user_id', $profile_ids);
-		try
+		$birthday_list = [];
+		foreach ($rows as $index => $data)
 		{
-			$result = $this->run_sql($sql);
+			$user_id = $data['user_id'];
+			if (isset($acl[$user_id]))
+			{
+				$birthday_list[] = $event['birthdays'][$index];
+			}
 		}
-		catch (Exception $exception)
+		$event['birthdays'] = $birthday_list;
+	}
+
+	public function filter_online($event)
+	{
+		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
+		{
+			// Todo check for 'can view hidden users permission'
+			return;
+		}
+
+		$online_users     = $event['online_users'];
+		$online_ids       = array_keys($online_users['online_users']);
+		$user_online_link = $event['user_online_link'];
+
+		// Anybody home? Skip if there are no members online
+		if (empty($online_ids))
 		{
 			return;
 		}
 
-		// Store result to associative array for quick access
-		$profile_settings = [];
+		$acl = $this->access_control($online_ids, ['online']);
+
+		// Bots don't have a profile entry, we'll need to add them back in
+		foreach ($event['rowset'] as $row)
+		{
+			if ($row['user_type'] == 2)
+			{
+				$acl[$row['user_id']] = true;
+			}
+		}
+
+		// Remove everyone we can't view from the online list
+		foreach ($online_ids as $online_id)
+		{
+			// User is online, but no access to view
+			if (!isset($acl[$online_id]))
+			{
+				// Add to hidden users
+				$online_users['hidden_users'][$online_id] = $online_id;
+
+				// Adjust counts
+				$online_users['visible_online']--;
+				$online_users['hidden_online']++;
+
+				// Remove from displayed list
+				unset($user_online_link[$online_id]);
+			}
+		}
+
+		$event['online_users']     = $online_users;
+		$event['user_online_link'] = $user_online_link;
+	}
+
+	public function filter_online_topic_post($event)
+	{
+		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
+		{
+			// Todo check for 'can view hidden users permission'
+			return;
+		}
+
+		$user_ids   = array_keys($event['user_cache']);
+		$user_cache = $event['user_cache'];
+		$acl        = $this->access_control($user_ids, ['online']);
+		foreach ($user_ids as $user_id)
+		{
+			if (!isset($acl[$user_id]))
+			{
+				$user_cache[$user_id]['online'] = false;
+			}
+		}
+		$event['user_cache'] = $user_cache;
+	}
+
+	public function filter_online_view($event)
+	{
+		// Bypass bots, and guests
+		if ($event['row']['user_type'] == 2)
+		{
+			return;
+		}
+
+		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
+		{
+			// Todo check for 'can view hidden users permission'
+			return;
+		}
+
+		$user_id = $event['row']['user_id'];
+
+		$acl = $this->access_control([$user_id], ['online']);
+		if (!isset($acl[$user_id]))
+		{
+			$template                   = $event['template_row'];
+			$template['USERNAME']       = '******';
+			$template['USERNAME_FULL']  = '******';
+			$template['USERNAME_COLOR'] = '';
+			$event['template_row']      = $template;
+		}
+	}
+
+	/**
+	 * Find if a user has access to a given array of user ids and fields
+	 *
+	 * @param array $user_ids
+	 * @param array $fields
+	 * @return array
+	 */
+	private function access_control($user_ids, $fields)
+	{
+		if (empty($user_ids || empty($fields)))
+			return [];
+
+		// Build Friend list
+		$friend_list = [];
+		$foe_list    = [];
+		if ($this->uid > 1)
+		{
+			$sql = 'SELECT user_id,friend,foe FROM ' . ZEBRA_TABLE . '
+			 WHERE ' . $this->db->sql_in_set('user_id', $user_ids) . '
+			 AND zebra_id = ' . $this->uid;
+
+			$result = $this->db->sql_query($sql);
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				if ($row['foe'] === '1')
+				{
+					$foe_list[] = $row['user_id'];
+				}
+				else if ($row['friend'] === '1')
+				{
+					$friend_list[] = $row['user_id'];
+				}
+			}
+			$this->db->sql_freeresult($result);
+		}
+
+		// Fetch privacy settings
+		$sql    = 'SELECT user_id,' . implode(',', $fields) . ' FROM ' . $this->table . '
+		WHERE ' . $this->db->sql_in_set('user_id', $user_ids);
+		$result = $this->db->sql_query($sql);
+
+		// Access Control List
+		$acl = [];
 		while ($row = $this->db->sql_fetchrow($result))
 		{
-			$profile_settings[$row['user_id']] = $row['bday_age'];
-		}
-		$this->db->sql_freeresult($result);
-
-		// Each user
-		foreach ($event['rows'] as $index => $data)
-		{
-			$profile_id = $data['user_id'];
-
-			// Skip if viewing own profile
-			if ($user_id == $profile_id)
+			// Approve own profile
+			if ($this->uid == $row['user_id'])
 			{
-				$new_data[] = $original_data[$index];
+				$acl[$this->uid] = array_keys($row);
 				continue;
 			}
 
-			// Does the profile have the user listed as a friend?
-			$is_friend_of = $user_id != 1 ? $this->reverse_zebra($profile_id, $user_id) : 0;
-
-			// Hide everything from foes
-			// Todo might change this
-			if ($is_friend_of === -1)
+			// Skip foes
+			if (in_array($row['user_id'], $foe_list))
 			{
 				continue;
 			}
-			else
+
+			foreach ($fields as $field)
 			{
-				switch ($profile_settings[$profile_id])
+				switch ($row[$field])
 				{
-					// Guest
 					case 0:
-						$new_data[] = $original_data[$index];
+						$acl[$row['user_id']][] = $field;
 					break;
-
-					// Members
 					case 1:
-						if ($user_id > 1)
+						if ($this->uid > 1)
 						{
-							$new_data[] = $original_data[$index];
+							$acl[$row['user_id']][] = $field;
 						}
 					break;
-
-					// Friends
 					case 2:
-						if ($is_friend_of === 1)
+						if (in_array($row['user_id'], $friend_list))
 						{
-							$new_data[] = $original_data[$index];
+							$acl[$row['user_id']][] = $field;
 						}
 					break;
-
-					// Nobody
-					case 3:
+					default:
 					break;
 				}
 			}
 		}
-		$event['birthdays'] = $new_data;
-	}
-
-	/**
-	 * Run a sql query with error handling
-	 *
-	 * @param string $sql
-	 * @return mixed
-	 * @throws \Exception
-	 */
-	private function run_sql($sql)
-	{
-		// By pass phpBB's sql error handler
-		$this->db->sql_return_on_error(true);
-
-		$result = $this->db->sql_query($sql);
-
-		if ($this->db->get_sql_error_triggered())
-		{
-			// Give me that error array
-			$sql_err = $this->db->get_sql_error_returned();
-
-			// Okay phpBB you can have control back
-			$this->db->sql_return_on_error();
-
-			$err = new Exception($sql_err['message']);
-
-			// We only care about who called this function
-			$trace = $err->getTrace()[0];
-
-			$err_message = '<strong>' . $sql_err['message'] . '</strong><br><br>' . htmlspecialchars($sql) . '<br><br>' . $trace['file'] . ':' . $trace['line'];
-
-			// Add log entry; log_operation is an ACP language entry; $err_message is appended to log_operation via placeholders
-			$this->log->add('critical', $this->user->id(), $this->user->ip, 'ACP_PROFILEPRIVACY_LOG_ERROR_SQL', false, [$err_message]);
-
-			throw $err;
-		}
-		// Okay phpBB you can have control back
-		$this->db->sql_return_on_error();
-		return $result;
-	}
-
-
-	/**
-	 * Checks if $user has $zebra as a friend
-	 *
-	 * @param $user
-	 * @param $zebra
-	 * @return int
-	 */
-	private function reverse_zebra($user, $zebra): int
-	{
-		$sql = 'SELECT friend,foe FROM ' . ZEBRA_TABLE . ' WHERE user_id = ' . $user . ' AND zebra_id = ' . $zebra;
-		try
-		{
-			$result = $this->run_sql($sql);
-		}
-		catch (Exception $exception)
-		{
-			return 0;
-		}
-		$row = $this->db->sql_fetchrow($result);
-		if ($row === false)
-		{
-			return 0;
-		}
-
-		if ($row['foe'] === '1')
-		{
-			return -1;
-		}
-		elseif ($row['friend'] === '1')
-		{
-			return 1;
-		}
-		else
-		{
-			return 0;
-		}
+		return $acl;
 	}
 }

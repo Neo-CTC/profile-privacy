@@ -107,6 +107,9 @@ class install_schema extends migration
 		$result = $this->db->sql_query($sql);
 		$count = $this->db->sql_fetchfield('total', 0, $result);
 
+		// Add default for anonymous user
+		$this->db->sql_multi_insert($this->table_prefix . 'profile_privacy_ext', ['user_id' => 1]);
+
 		// Add defaults for users
 		for ($i = 0; $i < $count; $i += 500)
 		{

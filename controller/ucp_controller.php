@@ -161,8 +161,13 @@ class ucp_controller
 		$field_settings = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
 
-		// But first, let's add in the option for controlling the age field on the view profile page
-		$this->template->assign_block_vars('profile_fields', [
+		// But first, let's add in a few non-profile options
+		$this->template->assign_block_vars('board_fields', [
+			'FIELD_ID'      => 'online',
+			'LANG_NAME'     => $this->language->lang('UCP_PROFILEPRIVACY_SETTING_ONLINE'),
+			'FIELD_SETTING' => $field_settings['online'],
+		]);
+		$this->template->assign_block_vars('board_fields', [
 			'FIELD_ID'      => 'bday_age',
 			'LANG_NAME'     => $this->language->lang('BIRTHDAY'),
 			'FIELD_SETTING' => $field_settings['bday_age'],
