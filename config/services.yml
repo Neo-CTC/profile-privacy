@@ -7,7 +7,6 @@ services:
             - '@request'
             - '@template'
             - '@user'
-            - '@profilefields.manager'
             - '@dbal.tools'
 
     crosstimecafe.profileprivacy.event.acp:

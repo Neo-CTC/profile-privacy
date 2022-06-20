@@ -103,9 +103,9 @@ class install_schema extends migration
 
 
 		// Get total count of users
-		$sql = 'SELECT COUNT(user_id) AS total FROM ' . PROFILE_FIELDS_DATA_TABLE;
+		$sql    = 'SELECT COUNT(user_id) AS total FROM ' . PROFILE_FIELDS_DATA_TABLE;
 		$result = $this->db->sql_query($sql);
-		$count = $this->db->sql_fetchfield('total', 0, $result);
+		$count  = $this->db->sql_fetchfield('total', 0, $result);
 
 		// Add default for anonymous user
 		$this->db->sql_multi_insert($this->table_prefix . 'profile_privacy_ext', ['user_id' => 1]);
@@ -113,7 +113,7 @@ class install_schema extends migration
 		// Add defaults for users
 		for ($i = 0; $i < $count; $i += 500)
 		{
-			$sql = 'SELECT user_id FROM ' . PROFILE_FIELDS_DATA_TABLE;
+			$sql    = 'SELECT user_id FROM ' . PROFILE_FIELDS_DATA_TABLE;
 			$result = $this->db->sql_query_limit($sql, 500, $i);
 
 			$users = [];

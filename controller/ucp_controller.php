@@ -16,33 +16,29 @@ use phpbb\language\language;
 use phpbb\request\request;
 use phpbb\template\template;
 use phpbb\user;
-use phpbb\profilefields\manager;
 
 /**
  * Profile Privacy UCP controller.
  */
 class ucp_controller
 {
-	protected $db;
-	protected $language;
-	protected $request;
-	protected $template;
-	protected $user;
-	protected $manager;
+	private $db;
+	private $language;
+	private $request;
+	private $template;
+	private $user;
 
-	protected $table;
-
-	protected $u_action;
+	private $table;
+	private $u_action;
 	private $db_tools;
 
-	public function __construct(driver_interface $db, language $language, request $request, template $template, user $user, manager $manager, tools_interface $tools)
+	public function __construct(driver_interface $db, language $language, request $request, template $template, user $user, tools_interface $tools)
 	{
-		$this->db = $db;
+		$this->db       = $db;
 		$this->language = $language;
-		$this->request = $request;
+		$this->request  = $request;
 		$this->template = $template;
-		$this->user = $user;
-		$this->manager = $manager;
+		$this->user     = $user;
 		$this->db_tools = $tools;
 
 		global $table_prefix;
@@ -146,7 +142,7 @@ class ucp_controller
 		$sql_where = ' AND f.field_show_profile = 1';
 
 		// Fetch profile fields
-		$sql = 'SELECT l.*, f.*' .
+		$sql    = 'SELECT l.*, f.*' .
 			' FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . ' f' .
 			' WHERE l.field_id = f.field_id AND f.field_active = 1 AND l.lang_id = ' . (int) $lang_id . $sql_where .
 			' ORDER BY f.field_order ASC';
@@ -156,8 +152,8 @@ class ucp_controller
 		$this->db->sql_freeresult($result);
 
 		// Fetch current field settings
-		$sql = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . $this->user->id();
-		$result = $this->db->sql_query($sql);
+		$sql            = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . $this->user->id();
+		$result         = $this->db->sql_query($sql);
 		$field_settings = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
 

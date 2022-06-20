@@ -37,7 +37,7 @@ class ucp_listener implements EventSubscriberInterface
 
 	public function __construct(driver_interface $db, user $user)
 	{
-		$this->db = $db;
+		$this->db   = $db;
 		$this->user = $user;
 
 		global $table_prefix;
@@ -52,8 +52,8 @@ class ucp_listener implements EventSubscriberInterface
 	 */
 	public function create_profile_entry($event)
 	{
-		$sql = 'SELECT user_id FROM ' . $this->table . ' WHERE user_id = ' . $this->user->id();
-		$result = $this->db->sql_query($sql);
+		$sql       = 'SELECT user_id FROM ' . $this->table . ' WHERE user_id = ' . $this->user->id();
+		$result    = $this->db->sql_query($sql);
 		$has_entry = $this->db->sql_fetchfield('user_id', 0, $result);
 		$this->db->sql_freeresult($result);
 

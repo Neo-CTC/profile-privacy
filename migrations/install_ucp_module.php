@@ -24,11 +24,11 @@ class install_ucp_module extends migration
 	 */
 	public function effectively_installed()
 	{
-		$sql = 'SELECT module_id
+		$sql       = 'SELECT module_id
 			FROM ' . $this->table_prefix . "modules
 			WHERE module_class = 'ucp'
 				AND module_langname = 'UCP_PROFILEPRIVACY_TITLE'";
-		$result = $this->db->sql_query($sql);
+		$result    = $this->db->sql_query($sql);
 		$module_id = $this->db->sql_fetchfield('module_id');
 		$this->db->sql_freeresult($result);
 

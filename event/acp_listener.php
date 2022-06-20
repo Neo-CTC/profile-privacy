@@ -53,7 +53,7 @@ class acp_listener implements EventSubscriberInterface
 	 */
 	public function modify_profile_columns($event)
 	{
-		$fid = $event['field_data']['field_ident'];
+		$fid    = $event['field_data']['field_ident'];
 		$action = $event['action'];
 
 		// We only care about creating a field since the field identifier never changes
@@ -70,7 +70,7 @@ class acp_listener implements EventSubscriberInterface
 	public function check_columns($event)
 	{
 		$phpbb_columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
-		$my_columns = $this->db_tools->sql_list_columns($this->table);
+		$my_columns    = $this->db_tools->sql_list_columns($this->table);
 		$extra_columns = array_diff($my_columns, $phpbb_columns);
 		foreach ($extra_columns as $column)
 		{
