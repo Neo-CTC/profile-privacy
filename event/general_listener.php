@@ -81,7 +81,7 @@ class general_listener implements EventSubscriberInterface
 		{
 			foreach ($fields as $field)
 			{
-				if (!isset($acl[$user_id]) || !in_array($field, $acl[$user_id]))
+				if (!isset($acl[$user_id][$field]))
 				{
 					$field_data[$user_id][$field] = '';
 				}
@@ -108,12 +108,12 @@ class general_listener implements EventSubscriberInterface
 		$acl        = $this->access_control([$profile_id], $fields);
 
 		$template = $event['template_data'];
-		if (!isset($acl[$profile_id]) || !in_array('bday_age', $acl[$profile_id]))
+		if (!isset($acl[$profile_id]['bday_age']))
 		{
 			$template['AGE'] = '';
 		}
 
-		if (!isset($acl[$profile_id]) || !in_array('online', $acl[$profile_id]))
+		if (!isset($acl[$profile_id]['online']))
 		{
 			$template['LAST_ACTIVE'] = ' - ';
 			$template['S_ONLINE']    = false;
@@ -187,7 +187,7 @@ class general_listener implements EventSubscriberInterface
 		{
 			if ($row['user_type'] == 2)
 			{
-				$acl[$row['user_id']] = true;
+				$acl[$row['user_id']]['online'] = true;
 			}
 		}
 
@@ -251,6 +251,8 @@ class general_listener implements EventSubscriberInterface
 		$acl = $this->access_control([$user_id], ['online']);
 		if (!isset($acl[$user_id]))
 		{
+			// We can't stop phpBB from adding this row to the template block
+			// The best we can do is blank out the usernames
 			$template                   = $event['template_row'];
 			$template['USERNAME']       = '******';
 			$template['USERNAME_FULL']  = '******';
@@ -295,19 +297,19 @@ class general_listener implements EventSubscriberInterface
 		if ($this->uid > 1)
 		{
 			$sql = 'SELECT user_id,friend,foe FROM ' . ZEBRA_TABLE . '
-			 WHERE ' . $this->db->sql_in_set('user_id', $user_ids) . '
-			 AND zebra_id = ' . $this->uid;
+				WHERE ' . $this->db->sql_in_set('user_id', $user_ids) . '
+				AND zebra_id = ' . $this->uid;
 
 			$result = $this->db->sql_query($sql);
 			while ($row = $this->db->sql_fetchrow($result))
 			{
 				if ($row['foe'] === '1')
 				{
-					$foe_list[] = $row['user_id'];
+					$foe_list[$row['user_id']] = true;
 				}
 				else if ($row['friend'] === '1')
 				{
-					$friend_list[] = $row['user_id'];
+					$friend_list[$row['user_id']] = true;
 				}
 			}
 			$this->db->sql_freeresult($result);
@@ -315,7 +317,7 @@ class general_listener implements EventSubscriberInterface
 
 		// Fetch privacy settings
 		$sql    = 'SELECT user_id,' . implode(',', $fields) . ' FROM ' . $this->table . '
-		WHERE ' . $this->db->sql_in_set('user_id', $user_ids);
+			WHERE ' . $this->db->sql_in_set('user_id', $user_ids);
 		$result = $this->db->sql_query($sql);
 
 		// Access Control List
@@ -325,12 +327,15 @@ class general_listener implements EventSubscriberInterface
 			// Approve own profile
 			if ($this->uid == $row['user_id'])
 			{
-				$acl[$this->uid] = array_keys($row);
+				foreach ($row as $key => $data)
+				{
+					$acl[$this->uid][$key] = true;
+				}
 				continue;
 			}
 
 			// Skip foes
-			if (in_array($row['user_id'], $foe_list))
+			if (isset($foe_list[$row['user_id']]))
 			{
 				continue;
 			}
@@ -340,20 +345,23 @@ class general_listener implements EventSubscriberInterface
 				switch ($row[$field])
 				{
 					case 0:
-						$acl[$row['user_id']][] = $field;
+						$acl[$row['user_id']][$field] = true;
 					break;
+
 					case 1:
 						if ($this->uid > 1)
 						{
-							$acl[$row['user_id']][] = $field;
+							$acl[$row['user_id']][$field] = true;
 						}
 					break;
+
 					case 2:
-						if (in_array($row['user_id'], $friend_list))
+						if (isset($friend_list[$row['user_id']]))
 						{
-							$acl[$row['user_id']][] = $field;
+							$acl[$row['user_id']][$field] = true;
 						}
 					break;
+
 					default:
 					break;
 				}
