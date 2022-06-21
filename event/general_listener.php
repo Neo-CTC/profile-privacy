@@ -115,7 +115,6 @@ class general_listener implements EventSubscriberInterface
 
 		if (!isset($acl[$profile_id]) || !in_array('online', $acl[$profile_id]))
 		{
-			// Todo: test how this works when using builtin online hiding
 			$template['LAST_ACTIVE'] = ' - ';
 			$template['S_ONLINE']    = false;
 		}
@@ -168,7 +167,6 @@ class general_listener implements EventSubscriberInterface
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
-			// Todo check for 'can view hidden users permission'
 			return;
 		}
 
@@ -219,7 +217,6 @@ class general_listener implements EventSubscriberInterface
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
-			// Todo check for 'can view hidden users permission'
 			return;
 		}
 
@@ -246,7 +243,6 @@ class general_listener implements EventSubscriberInterface
 
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
-			// Todo check for 'can view hidden users permission'
 			return;
 		}
 
@@ -267,7 +263,6 @@ class general_listener implements EventSubscriberInterface
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
-			// Todo check for 'can view hidden users permission'
 			return;
 		}
 
