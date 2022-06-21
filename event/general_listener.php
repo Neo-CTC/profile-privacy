@@ -29,12 +29,12 @@ class general_listener implements EventSubscriberInterface
 	{
 		return [
 			'core.grab_profile_fields_data'                 => 'filter_profile_fields',
-			'core.memberlist_prepare_profile_data'          => 'filter_age',
+			'core.memberlist_prepare_profile_data'          => 'filter_profile_age_online',
 			'core.index_modify_birthdays_list'              => 'filter_age_front_page',
 			'core.obtain_users_online_string_before_modify' => 'filter_online',
 			'core.viewtopic_modify_post_data'               => 'filter_online_topic_post',
 			'core.viewonline_modify_user_row'               => 'filter_online_view',
-
+			'core.ucp_pm_view_messsage'                     => 'filter_online_pm',
 		];
 	}
 
@@ -91,12 +91,12 @@ class general_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Filters age from view profile page
+	 * Filters age and online status from view profile page
 	 *
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_age($event)
+	public function filter_profile_age_online($event)
 	{
 		// Show everything to mods & admins
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -104,13 +104,22 @@ class general_listener implements EventSubscriberInterface
 			return;
 		}
 		$profile_id = $event['data']['user_id'];
-		$acl        = $this->access_control([$profile_id], ['bday_age']);
-		if (!isset($acl[$profile_id]))
+		$fields     = ['bday_age', 'online'];
+		$acl        = $this->access_control([$profile_id], $fields);
+
+		$template = $event['template_data'];
+		if (!isset($acl[$profile_id]) || !in_array('bday_age', $acl[$profile_id]))
 		{
-			$template               = $event['template_data'];
-			$template['AGE']        = '';
-			$event['template_data'] = $template;
+			$template['AGE'] = '';
 		}
+
+		if (!isset($acl[$profile_id]) || !in_array('online', $acl[$profile_id]))
+		{
+			// Todo: test how this works when using builtin online hiding
+			$template['LAST_ACTIVE'] = ' - ';
+			$template['S_ONLINE']    = false;
+		}
+		$event['template_data'] = $template;
 	}
 
 	/**
@@ -251,6 +260,25 @@ class general_listener implements EventSubscriberInterface
 			$template['USERNAME_FULL']  = '******';
 			$template['USERNAME_COLOR'] = '';
 			$event['template_row']      = $template;
+		}
+	}
+
+	public function filter_online_pm($event)
+	{
+		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
+		{
+			// Todo check for 'can view hidden users permission'
+			return;
+		}
+
+		$user_id = $event['message_row']['user_id'];
+		$acl     = $this->access_control([$user_id], ['online']);
+		if (!isset($acl[$user_id]))
+		{
+			$template               = $event['msg_data'];
+			$template['S_ONLINE']   = false;
+			$template['ONLINE_IMG'] = '';
+			$event['msg_data']      = $template;
 		}
 	}
 
