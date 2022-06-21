@@ -32,6 +32,8 @@ class ucp_controller
 	private $u_action;
 	private $db_tools;
 
+	private $uid;
+
 	public function __construct(driver_interface $db, language $language, request $request, template $template, user $user, tools_interface $tools)
 	{
 		$this->db       = $db;
@@ -43,6 +45,8 @@ class ucp_controller
 
 		global $table_prefix;
 		$this->table = $table_prefix . 'profile_privacy_ext';
+
+		$this->uid = $this->user->id();
 	}
 
 	/**
@@ -92,7 +96,7 @@ class ucp_controller
 			{
 				$sql = 'UPDATE ' . $this->table .
 					' SET ' . $this->db->sql_build_array('UPDATE', $data) .
-					' WHERE user_id = ' . $this->user->id();
+					' WHERE user_id = ' . $this->uid;
 				$this->db->sql_query($sql);
 
 				// Option settings have been updated
@@ -132,7 +136,7 @@ class ucp_controller
 	 * Generate the settings template
 	 * Recreating function from phpbb/profilefields/manager.php for finer control over template
 	 *
-	 * @param $lang_id
+	 * @param int $lang_id
 	 * @return void
 	 */
 	public function generate_profile_fields($lang_id)
@@ -144,7 +148,7 @@ class ucp_controller
 		// Fetch profile fields
 		$sql    = 'SELECT l.*, f.*' .
 			' FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . ' f' .
-			' WHERE l.field_id = f.field_id AND f.field_active = 1 AND l.lang_id = ' . (int) $lang_id . $sql_where .
+			' WHERE l.field_id = f.field_id AND f.field_active = 1 AND l.lang_id = ' . $lang_id . $sql_where .
 			' ORDER BY f.field_order ASC';
 		$result = $this->db->sql_query($sql);
 
@@ -152,7 +156,7 @@ class ucp_controller
 		$this->db->sql_freeresult($result);
 
 		// Fetch current field settings
-		$sql            = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . $this->user->id();
+		$sql            = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . $this->uid;
 		$result         = $this->db->sql_query($sql);
 		$field_settings = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);

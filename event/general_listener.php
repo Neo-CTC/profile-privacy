@@ -103,17 +103,17 @@ class general_listener implements EventSubscriberInterface
 		{
 			return;
 		}
-		$profile_id = $event['data']['user_id'];
-		$fields     = ['bday_age', 'online'];
-		$acl        = $this->access_control([$profile_id], $fields);
+		$user_id = $event['data']['user_id'];
+		$fields  = ['bday_age', 'online'];
+		$acl     = $this->access_control([$user_id], $fields);
 
 		$template = $event['template_data'];
-		if (!isset($acl[$profile_id]['bday_age']))
+		if (!isset($acl[$user_id]['bday_age']))
 		{
 			$template['AGE'] = '';
 		}
 
-		if (!isset($acl[$profile_id]['online']))
+		if (!isset($acl[$user_id]['online']))
 		{
 			$template['LAST_ACTIVE'] = ' - ';
 			$template['S_ONLINE']    = false;
@@ -142,14 +142,14 @@ class general_listener implements EventSubscriberInterface
 		}
 
 		// Fetch user ids from list
-		$profile_ids = [];
-		$rows        = $event['rows'];
+		$user_ids = [];
+		$rows     = $event['rows'];
 		foreach ($rows as $row)
 		{
-			$profile_ids[] = $row['user_id'];
+			$user_ids[] = $row['user_id'];
 		}
 
-		$acl = $this->access_control($profile_ids, ['bday_age']);
+		$acl = $this->access_control($user_ids, ['bday_age']);
 
 		$birthday_list = [];
 		foreach ($rows as $index => $data)
@@ -171,16 +171,16 @@ class general_listener implements EventSubscriberInterface
 		}
 
 		$online_users     = $event['online_users'];
-		$online_ids       = array_keys($online_users['online_users']);
+		$user_ids         = array_keys($online_users['online_users']);
 		$user_online_link = $event['user_online_link'];
 
 		// Anybody home? Skip if there are no members online
-		if (empty($online_ids))
+		if (empty($user_ids))
 		{
 			return;
 		}
 
-		$acl = $this->access_control($online_ids, ['online']);
+		$acl = $this->access_control($user_ids, ['online']);
 
 		// Bots don't have a profile entry, we'll need to add them back in
 		foreach ($event['rowset'] as $row)
@@ -192,20 +192,20 @@ class general_listener implements EventSubscriberInterface
 		}
 
 		// Remove everyone we can't view from the online list
-		foreach ($online_ids as $online_id)
+		foreach ($user_ids as $user_id)
 		{
 			// User is online, but no access to view
-			if (!isset($acl[$online_id]))
+			if (!isset($acl[$user_id]))
 			{
 				// Add to hidden users
-				$online_users['hidden_users'][$online_id] = $online_id;
+				$online_users['hidden_users'][$user_id] = $user_id;
 
 				// Adjust counts
 				$online_users['visible_online']--;
 				$online_users['hidden_online']++;
 
 				// Remove from displayed list
-				unset($user_online_link[$online_id]);
+				unset($user_online_link[$user_id]);
 			}
 		}
 
