@@ -18,7 +18,7 @@ use phpbb\db\driver\driver_interface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- *
+ * Applies privacy settings at various locations throughout phpBB
  */
 class general_listener implements EventSubscriberInterface
 {
@@ -163,6 +163,12 @@ class general_listener implements EventSubscriberInterface
 		$event['birthdays'] = $birthday_list;
 	}
 
+	/**
+	 * Filter usernames from the bottom of index, view forum, and view topic pages
+	 *
+	 * @param $event
+	 * @return void
+	 */
 	public function filter_online($event)
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -213,6 +219,12 @@ class general_listener implements EventSubscriberInterface
 		$event['user_online_link'] = $user_online_link;
 	}
 
+	/**
+	 * Filter online status from posts on view topic page
+	 *
+	 * @param $event
+	 * @return void
+	 */
 	public function filter_online_topic_post($event)
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -233,6 +245,12 @@ class general_listener implements EventSubscriberInterface
 		$event['user_cache'] = $user_cache;
 	}
 
+	/**
+	 * Filter usernames from the view online page
+	 *
+	 * @param $event
+	 * @return void
+	 */
 	public function filter_online_view($event)
 	{
 		// Bypass bots, and guests
@@ -261,6 +279,12 @@ class general_listener implements EventSubscriberInterface
 		}
 	}
 
+	/**
+	 * Filter online status on view private message page
+	 *
+	 * @param $event
+	 * @return void
+	 */
 	public function filter_online_pm($event)
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -280,18 +304,18 @@ class general_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Find if a user has access to a given array of user ids and fields
+	 * Create a multidimensional array of user ids and profile fields the current user can view
 	 *
-	 * @param array $user_ids
-	 * @param array $fields
-	 * @return array
+	 * @param int[]    $user_ids Array of user ids
+	 * @param string[] $fields
+	 * @return array An array of fields the user can view [user id] => [profile field] => true
 	 */
 	private function access_control($user_ids, $fields)
 	{
 		if (empty($user_ids || empty($fields)))
 			return [];
 
-		// Build Friend list
+		// Build friend or foe list
 		$friend_list = [];
 		$foe_list    = [];
 		if ($this->uid > 1)

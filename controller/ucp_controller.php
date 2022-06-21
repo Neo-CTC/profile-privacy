@@ -18,7 +18,7 @@ use phpbb\template\template;
 use phpbb\user;
 
 /**
- * Profile Privacy UCP controller.
+ * Creates the settings page in the UCP
  */
 class ucp_controller
 {
@@ -50,7 +50,7 @@ class ucp_controller
 	}
 
 	/**
-	 * Display the options a user can configure for this extension.
+	 * Display the settings page
 	 *
 	 * @return void
 	 */

@@ -15,13 +15,11 @@ use phpbb\db\driver\driver_interface;
 use phpbb\user;
 
 /**
- * Profile Privacy Event listener.
+ * Class for listing to events in the UCP
  */
 class ucp_listener implements EventSubscriberInterface
 {
 	/**
-	 * Return events to listen to
-	 *
 	 * @return string[]
 	 */
 	public static function getSubscribedEvents()
@@ -45,7 +43,7 @@ class ucp_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Checks if the user has an entry in the table
+	 * Creates an entry for the user in the privacy settings table if missing
 	 *
 	 * @param $event
 	 * @return void

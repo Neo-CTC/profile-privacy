@@ -14,13 +14,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use phpbb\db\tools\tools_interface;
 
 /**
- *
+ * Updates column schema for the privacy settings table
  */
 class acp_listener implements EventSubscriberInterface
 {
 	/**
-	 * Return events to listen to
-	 *
 	 * @return string[]
 	 */
 	public static function getSubscribedEvents()
@@ -46,7 +44,7 @@ class acp_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Adds a new column to the privacy table when creating a new profile field
+	 * Add a new column to the privacy settings table when a new profile field is created
 	 *
 	 * @param $event
 	 * @return void
@@ -64,21 +62,26 @@ class acp_listener implements EventSubscriberInterface
 	}
 
 	/**
+	 * Check for unneeded columns
+	 *
+	 * There is no event to catch when a custom profile field is deleted. Without
+	 * that event we'll have check for a column mismatch every time we visit the
+	 * custom profile fields page.
+	 *
 	 * @param $event
 	 * @return void
 	 */
 	public function check_columns($event)
 	{
 		$phpbb_columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
+		// Add these additional columns so they are not removed
+		$phpbb_columns[] = 'bday_age';
+		$phpbb_columns[] = 'online';
+
 		$my_columns    = $this->db_tools->sql_list_columns($this->table);
 		$extra_columns = array_diff($my_columns, $phpbb_columns);
 		foreach ($extra_columns as $column)
 		{
-			// Don't delete the birthday column
-			if ($column == 'bday_age')
-			{
-				continue;
-			}
 			$this->db_tools->sql_column_remove($this->table, $column);
 		}
 	}

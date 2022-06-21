@@ -47,6 +47,7 @@ class install_schema extends migration
 		return [
 			'add_tables' => [
 				$this->table_prefix . 'profile_privacy_ext' => [
+					// Be sure to also update the column list in acp_listener.php
 					'COLUMNS'     => [
 						'user_id'  => ['UINT', 0],
 						'bday_age' => ['UINT', 0],
