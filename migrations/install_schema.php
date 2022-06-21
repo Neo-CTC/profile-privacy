@@ -50,6 +50,7 @@ class install_schema extends migration
 					'COLUMNS'     => [
 						'user_id'  => ['UINT', 0],
 						'bday_age' => ['UINT', 0],
+						'online'   => ['UINT', 0],
 					],
 					'PRIMARY_KEY' => 'user_id',
 				],
