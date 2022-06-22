@@ -72,9 +72,9 @@ class general_listener implements EventSubscriberInterface
 			return;
 		}
 
-		$user_ids   = $event['user_ids'];
 		$fields     = $this->db_tools->sql_list_columns($this->table);
 		$field_data = $event['field_data'];
+		$user_ids   = array_keys($field_data);
 
 		$acl = $this->access_control($user_ids, $fields);
 		foreach ($user_ids as $user_id)
