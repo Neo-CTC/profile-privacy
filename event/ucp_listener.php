@@ -43,7 +43,7 @@ class ucp_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Creates an entry for the user in the privacy settings table if missing
+	 * Create an entry for the user in the privacy settings table if missing
 	 *
 	 * @param $event
 	 * @return void
