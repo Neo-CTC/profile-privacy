@@ -84,12 +84,22 @@ class ucp_controller
 					continue;
 				}
 				$v = $this->request->variable($column, 1);
-				if ($v < 0 or $v > 3)
+				if ($v < 0 || $v > 3)
 				{
 					$v = 3;
 				}
 				$data[$column] = $v;
 			}
+
+			if ($data['pm'] === 0)
+			{
+				$data['pm'] = 1;
+			}
+			if ($data['email'] === 0)
+			{
+				$data['email'] = 1;
+			}
+
 
 			// If no errors, process the form data
 			if (empty($errors))
@@ -162,16 +172,14 @@ class ucp_controller
 		$this->db->sql_freeresult($result);
 
 		// But first, let's add in a few non-profile options
-		$this->template->assign_block_vars('board_fields', [
-			'FIELD_ID'      => 'online',
-			'LANG_NAME'     => $this->language->lang('UCP_PROFILEPRIVACY_SETTING_ONLINE'),
-			'FIELD_SETTING' => $field_settings['online'],
-		]);
-		$this->template->assign_block_vars('board_fields', [
-			'FIELD_ID'      => 'bday_age',
-			'LANG_NAME'     => $this->language->lang('BIRTHDAY'),
-			'FIELD_SETTING' => $field_settings['bday_age'],
-		]);
+		foreach (['online', 'bday_age', 'pm', 'email'] as $field)
+		{
+			$this->template->assign_block_vars('board_fields', [
+				'FIELD_ID'      => $field,
+				'LANG_NAME'     => $this->language->lang('UCP_PROFILEPRIVACY_SETTING_' . strtoupper($field)),
+				'FIELD_SETTING' => $field_settings[$field],
+			]);
+		}
 
 		foreach ($fields as $field)
 		{
@@ -184,3 +192,4 @@ class ucp_controller
 		}
 	}
 }
+

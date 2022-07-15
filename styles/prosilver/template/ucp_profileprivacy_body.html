@@ -27,7 +27,7 @@
 				<!-- BEGIN board_fields -->
 				<tr class="<!-- IF board_fields.S_ROW_COUNT is odd -->bg2<!-- ELSE -->bg1<!-- ENDIF -->">
 					<td>{board_fields.LANG_NAME}</td>
-					<td class="mark"><input type="radio" name="{board_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_PUBLIC') }}" value="0" {% if board_fields.FIELD_SETTING == 0 %}checked{% endif %}></td>
+					<td class="mark"><input type="radio" name="{board_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_PUBLIC') }}" value="0" {% if board_fields.FIELD_SETTING == 0 %}checked{% endif %}{% if board_fields.FIELD_ID in ['pm', 'email'] %} disabled{% endif %}></td>
 					<td class="mark"><input type="radio" name="{board_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_MEMBERS') }}" value="1" {% if board_fields.FIELD_SETTING == 1 %}checked{% endif %}></td>
 					<td class="mark"><input type="radio" name="{board_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_FRIENDS') }}" value="2" {% if board_fields.FIELD_SETTING == 2 %}checked{% endif %}></td>
 					<td class="mark"><input type="radio" name="{board_fields.FIELD_ID}" title="{{ lang('UCP_PROFILEPRIVACY_SETTING_HIDDEN') }}" value="3" {% if board_fields.FIELD_SETTING == 3 %}checked{% endif %}></td>

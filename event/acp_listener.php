@@ -77,6 +77,8 @@ class acp_listener implements EventSubscriberInterface
 		// Add these additional columns so they are not removed
 		$phpbb_columns[] = 'bday_age';
 		$phpbb_columns[] = 'online';
+		$phpbb_columns[] = 'pm';
+		$phpbb_columns[] = 'email';
 
 		$my_columns    = $this->db_tools->sql_list_columns($this->table);
 		$extra_columns = array_diff($my_columns, $phpbb_columns);
