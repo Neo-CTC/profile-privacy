@@ -617,5 +617,4 @@ class general_listener implements EventSubscriberInterface
 		}
 		return $acl;
 	}
-	// Todo: same group members setting
 }

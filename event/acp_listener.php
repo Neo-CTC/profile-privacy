@@ -14,7 +14,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use phpbb\db\tools\tools_interface;
 
 /**
- * Updates column schema for the privacy settings table
+ * Update column schema for the privacy settings table
  */
 class acp_listener implements EventSubscriberInterface
 {
@@ -25,9 +25,9 @@ class acp_listener implements EventSubscriberInterface
 	{
 		return [
 			'core.acp_profile_create_edit_save_before' => 'modify_profile_columns',
-			// Todo we need a new event for phpBB
+			// We need a new event for phpBB
 			// 'core.acp_profile_delete_before' => 'delete_profile_columns',
-			// But until then, we'll double check for deleted columns on each visit the the acp profile page
+			// But until then, check for deleted columns on each visit the acp profile page
 			'core.acp_profile_action'                  => 'check_columns',
 		];
 	}
@@ -62,10 +62,10 @@ class acp_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Check for unneeded columns
+	 * Check for deleted columns
 	 *
 	 * There is no event to catch when a custom profile field is deleted. Without
-	 * that event we'll have check for a column mismatch every time we visit the
+	 * that event, check for a column mismatch every time we visit the
 	 * custom profile fields page.
 	 *
 	 * @param $event
