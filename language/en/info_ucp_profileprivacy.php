@@ -35,6 +35,6 @@ $lang = array_merge($lang, [
 	'UCP_PROFILEPRIVACY_SETTING_BOARD'    => 'Board Settings',
 	'UCP_PROFILEPRIVACY_SETTING_PROFILE'  => 'Profile Settings',
 
-	'UCP_PROFILEPRIVACY_PM_DENIED'         => '%s is not accepting private messages at this time ',
+	'UCP_PROFILEPRIVACY_PM_DENIED'         => '%s is not accepting private messages at this time',
 	'UCP_PROFILEPRIVACY_PM_DENIED_REVERSE' => 'Sending private messages to %s is unavailable due to your privacy settings',
 ]);

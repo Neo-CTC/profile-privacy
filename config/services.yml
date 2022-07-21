@@ -32,5 +32,6 @@ services:
             - '@auth'
             - '@dbal.tools'
             - '@language'
+            - '@request'
         tags:
             - { name: event.listener }

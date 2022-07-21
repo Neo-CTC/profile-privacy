@@ -12,6 +12,7 @@ namespace crosstimecafe\profileprivacy\event;
 
 use phpbb\db\tools\tools_interface;
 use phpbb\language\language;
+use phpbb\request\request;
 use phpbb\user;
 use phpbb\auth\auth;
 use phpbb\db\driver\driver_interface;
@@ -29,15 +30,16 @@ class general_listener implements EventSubscriberInterface
 	public static function getSubscribedEvents()
 	{
 		return [
-			'core.grab_profile_fields_data'                 => 'filter_profile_fields',
-			'core.memberlist_prepare_profile_data'          => 'filter_profile_page',
-			'core.index_modify_birthdays_list'              => 'filter_age_front_page',
-			'core.obtain_users_online_string_before_modify' => 'filter_online',
-			'core.viewtopic_modify_post_data'               => 'filter_online_topic_post',
-			'core.viewtopic_modify_post_row'                => 'filter_viewtopic_contact',
-			'core.viewonline_modify_user_row'               => 'filter_online_view',
-			'core.ucp_pm_view_messsage'                     => 'filter_pm_view',
-			'core.message_list_actions'                     => 'filter_pm_receiving',
+			'core.grab_profile_fields_data'                 => 'profile_fields',
+			'core.memberlist_prepare_profile_data'          => 'profile_page',
+			'core.index_modify_birthdays_list'              => 'birthday_front_page',
+			'core.obtain_users_online_string_before_modify' => 'online',
+			'core.viewtopic_modify_post_data'               => 'online_topic_post',
+			'core.viewtopic_modify_post_row'                => 'viewtopic_contact',
+			'core.viewonline_modify_user_row'               => 'online_view',
+			'core.ucp_pm_view_messsage'                     => 'pm_view',
+			'core.message_list_actions'                     => 'pm_receiving',
+			'core.modify_notification_template'             => 'email',
 		];
 	}
 
@@ -48,14 +50,16 @@ class general_listener implements EventSubscriberInterface
 	private $uid;
 	private $db_tools;
 	private $language;
+	private $request;
 
-	public function __construct(driver_interface $db, user $user, auth $auth, tools_interface $tools, language $language)
+	public function __construct(driver_interface $db, user $user, auth $auth, tools_interface $tools, language $language, request $request)
 	{
 		$this->db       = $db;
 		$this->user     = $user;
 		$this->auth     = $auth;
 		$this->db_tools = $tools;
 		$this->language = $language;
+		$this->request  = $request;
 
 		global $table_prefix;
 		$this->table = $table_prefix . 'profile_privacy_ext';
@@ -69,7 +73,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_profile_fields($event)
+	public function profile_fields($event)
 	{
 		// Show everything to mods & admins
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -101,7 +105,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_profile_page($event)
+	public function profile_page($event)
 	{
 		// Show everything to mods & admins
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -143,7 +147,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_age_front_page($event)
+	public function birthday_front_page($event)
 	{
 		// If nothing, do nothing
 		if (empty($event['rows']))
@@ -185,7 +189,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_online($event)
+	public function online($event)
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
@@ -241,7 +245,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_online_topic_post($event)
+	public function online_topic_post($event)
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
@@ -267,7 +271,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_online_view($event)
+	public function online_view($event)
 	{
 		// Bypass bots, and guests
 		if ($event['row']['user_type'] == 2)
@@ -301,7 +305,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_pm_view($event)
+	public function pm_view($event)
 	{
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
@@ -339,7 +343,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_pm_receiving($event)
+	public function pm_receiving($event)
 	{
 		// Skip admins and mods as always
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
@@ -425,7 +429,7 @@ class general_listener implements EventSubscriberInterface
 	 * @param $event
 	 * @return void
 	 */
-	public function filter_viewtopic_contact($event)
+	public function viewtopic_contact($event)
 	{
 		$post_row   = $event['post_row'];
 		$user_cache = $event['user_cache'];
@@ -444,6 +448,40 @@ class general_listener implements EventSubscriberInterface
 
 		$event['post_row']   = $post_row;
 		$event['user_cache'] = $user_cache;
+	}
+
+	/**
+	 * Apply privacy setting for user to user emails
+	 *
+	 * @param $event
+	 * @return void
+	 */
+	public function email($event)
+	{
+		if ($this->request->is_set_post('submit'))
+		{
+			$mode    = $this->request->variable('mode', '');
+			$user_id = $this->request->variable('u', '');
+			if ($mode !== 'email')
+			{
+				return;
+			}
+
+			$acl = $this->access_control($user_id, ['email']);
+			if (!isset($acl[$user_id]))
+			{
+				$sql = 'SELECT username
+					FROM ' . USERS_TABLE . '
+					WHERE user_id = ' . $user_id;
+
+				$result   = $this->db->sql_query($sql);
+				$username = $this->db->sql_fetchfield('username');
+				$this->db->sql_freeresult($result);
+
+				$this->language->add_lang(['general'], 'crosstimecafe/profileprivacy');
+				trigger_error($this->language->lang('PROFILEPRIVACY_EMAIL', $username));
+			}
+		}
 	}
 
 	/**
