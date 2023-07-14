@@ -40,6 +40,7 @@ class general_listener implements EventSubscriberInterface
 			'core.message_list_actions'                     => 'pm_receiving',
 			'core.modify_notification_template'             => 'email',
 			'core.user_add_after'                           => 'create_profile_entry',
+			'core.ucp_modify_friends_template_vars'         => 'friends_online',
 		];
 	}
 
@@ -491,6 +492,30 @@ class general_listener implements EventSubscriberInterface
 				$this->language->add_lang(['general'], 'crosstimecafe/profileprivacy');
 				trigger_error($this->language->lang('PROFILEPRIVACY_EMAIL', $username));
 			}
+		}
+	}
+
+	/**
+	 * Filter online users from ucp friends list
+	 *
+	 * @param $event
+	 *
+	 * @return void
+	 */
+	public function friends_online($event)
+	{
+		$which = $event['which'];
+		if ($which == 'offline')
+		{
+			return;
+		}
+
+		$row = $event['row'];
+		$acl = $this->access_control($row['user_id'], ['online']);
+		if (!isset($acl[$row['user_id']]))
+		{
+			$which          = 'offline';
+			$event['which'] = $which;
 		}
 	}
 
