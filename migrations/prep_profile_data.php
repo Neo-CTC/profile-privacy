@@ -63,19 +63,17 @@ class prep_profile_data extends migration
 				],
 			],
 			'WHERE'     => 'u.user_type != ' . USER_IGNORE . ' AND p.user_id IS NULL',
+			'ORDER_BY'  => 'u.user_id',
 		];
 		$sql         = $this->db->sql_build_query('SELECT', $sql_array);
-		$offset      = 0;
-		$limit       = 5;
+		$limit       = 500;
 		$join_result = $this->db->sql_query_limit($sql, $limit);
 
 		while ($rows = $this->db->sql_fetchrowset($join_result))
 		{
 			$this->db->sql_multi_insert($table, $rows);
-
-			$offset += $limit;
 			$this->db->sql_freeresult($join_result);
-			$join_result = $this->db->sql_query_limit($sql, $limit, $offset);
+			$join_result = $this->db->sql_query_limit($sql, $limit);
 		}
 	}
 }
