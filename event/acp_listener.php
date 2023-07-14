@@ -53,6 +53,7 @@ class acp_listener implements EventSubscriberInterface
 	{
 		$fid    = $event['field_data']['field_ident'];
 		$action = $event['action'];
+		// Todo: test renaming
 
 		// We only care about creating a field since the field identifier never changes
 		if ($action == 'create')

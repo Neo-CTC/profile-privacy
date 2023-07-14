@@ -10,13 +10,12 @@
 
 namespace crosstimecafe\profileprivacy\event;
 
+use phpbb\auth\auth;
+use phpbb\db\driver\driver_interface;
 use phpbb\db\tools\tools_interface;
 use phpbb\language\language;
 use phpbb\request\request;
 use phpbb\user;
-use phpbb\auth\auth;
-use phpbb\db\driver\driver_interface;
-
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -40,6 +39,7 @@ class general_listener implements EventSubscriberInterface
 			'core.ucp_pm_view_messsage'                     => 'pm_view',
 			'core.message_list_actions'                     => 'pm_receiving',
 			'core.modify_notification_template'             => 'email',
+			'core.user_add_after'                           => 'create_profile_entry',
 		];
 	}
 
@@ -71,6 +71,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filters profile fields on both the view topic page and the view profile page
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function profile_fields($event)
@@ -103,6 +104,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filters non profile fields from view profile page
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function profile_page($event)
@@ -145,6 +147,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filter birthdays from index.php
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function birthday_front_page($event)
@@ -187,6 +190,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filter usernames from the bottom of index, view forum, and view topic pages
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function online($event)
@@ -243,6 +247,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filter online status from posts on view topic page
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function online_topic_post($event)
@@ -269,6 +274,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filter usernames from the view online page
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function online_view($event)
@@ -303,6 +309,7 @@ class general_listener implements EventSubscriberInterface
 	 * Filter online status on view private message page
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function pm_view($event)
@@ -341,6 +348,7 @@ class general_listener implements EventSubscriberInterface
 	 * Remove recipients from private message based on privacy settings
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function pm_receiving($event)
@@ -427,6 +435,7 @@ class general_listener implements EventSubscriberInterface
 	 * Apply privacy settings to contact fields on view topic page
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function viewtopic_contact($event)
@@ -454,6 +463,7 @@ class general_listener implements EventSubscriberInterface
 	 * Apply privacy setting for user to user emails
 	 *
 	 * @param $event
+	 *
 	 * @return void
 	 */
 	public function email($event)
@@ -485,16 +495,33 @@ class general_listener implements EventSubscriberInterface
 	}
 
 	/**
+	 * Create privacy entry for a new user
+	 *
+	 * @param $event
+	 *
+	 * @return void
+	 */
+	public function create_profile_entry($event)
+	{
+		$uid = $event['user_id'];
+		$sql = 'INSERT INTO ' . $this->table . ' ' . $this->db->sql_build_array('INSERT', ['user_id' => $uid]);
+		$this->db->sql_query($sql);
+	}
+
+	/**
 	 * Create a multidimensional array of user ids and profile fields the current user can view
 	 *
 	 * @param int[]    $user_ids Array of user ids
 	 * @param string[] $fields   Array of columns to
+	 *
 	 * @return array An array of fields the user can view [user id] => [profile field] => true
 	 */
 	private function access_control($user_ids, $fields)
 	{
 		if (empty($user_ids || empty($fields)))
+		{
 			return [];
+		}
 
 		// Build friend or foe list
 		$friend_list = [];
@@ -512,9 +539,12 @@ class general_listener implements EventSubscriberInterface
 				{
 					$foe_list[$row['user_id']] = true;
 				}
-				else if ($row['friend'] === '1')
+				else
 				{
-					$friend_list[$row['user_id']] = true;
+					if ($row['friend'] === '1')
+					{
+						$friend_list[$row['user_id']] = true;
+					}
 				}
 			}
 			$this->db->sql_freeresult($result);
@@ -579,12 +609,15 @@ class general_listener implements EventSubscriberInterface
 	 * Check if other users can reply to a pm sent to them
 	 *
 	 * @param $user_ids
+	 *
 	 * @return array
 	 */
 	private function reverse_pm_control($user_ids)
 	{
 		if (empty($user_ids))
+		{
 			return [];
+		}
 
 		// Build friend or foe list
 		$friend_list = [];
@@ -602,9 +635,12 @@ class general_listener implements EventSubscriberInterface
 				{
 					$foe_list[$row['zebra_id']] = true;
 				}
-				else if ($row['friend'] === '1')
+				else
 				{
-					$friend_list[$row['zebra_id']] = true;
+					if ($row['friend'] === '1')
+					{
+						$friend_list[$row['zebra_id']] = true;
+					}
 				}
 			}
 			$this->db->sql_freeresult($result);
