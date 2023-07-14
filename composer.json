@@ -3,8 +3,8 @@
     "type": "phpbb-extension",
     "description": "Allows users to set access limits to their profile",
     "homepage": "https://www.phpbb.com/community/viewtopic.php?t=2621912",
-    "version": "0.3.0-beta",
-    "time": "2022-07-14",
+    "version": "0.3.1-beta",
+    "time": "2023-07-14",
     "license": "GPL-2.0-only",
     "authors": [
         {
