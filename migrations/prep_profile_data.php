@@ -22,7 +22,7 @@ class prep_profile_data extends migration
 	 *
 	 * @return string[]
 	 */
-	public static function depends_on()
+	public static function depends_on(): array
 	{
 		return [
 			'\crosstimecafe\profileprivacy\migrations\install_ucp_module',
@@ -35,13 +35,13 @@ class prep_profile_data extends migration
 	 *
 	 * @return array[]
 	 */
-	public function update_data()
+	public function update_data(): array
 	{
 		return [
 			[
 				'custom', [
-				[$this, 'prep_data'],
-			],
+					[$this, 'prep_data'],
+				],
 			],
 		];
 	}
@@ -50,7 +50,8 @@ class prep_profile_data extends migration
 	public function prep_data()
 	{
 		$table = $this->table_prefix . 'profile_privacy_ext';
-		// SQL join to find all the users that don't yet have a privacy entry
+
+		// SQL join to find all users without a privacy entry due to an error in install_schema
 		$sql_array   = [
 			'SELECT'    => 'u.user_id',
 			'FROM'      => [

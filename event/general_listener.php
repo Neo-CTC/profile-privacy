@@ -24,9 +24,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class general_listener implements EventSubscriberInterface
 {
 	/**
+	 * List of events to listen to
+	 *
 	 * @return string[]
 	 */
-	public static function getSubscribedEvents()
+	public static function getSubscribedEvents(): array
 	{
 		return [
 			'core.grab_profile_fields_data'                 => 'profile_fields',
@@ -196,6 +198,7 @@ class general_listener implements EventSubscriberInterface
 	 */
 	public function online($event)
 	{
+		// Let admins and moderators see everything
 		if ($this->auth->acl_gets('a_', 'm_') || $this->auth->acl_getf_global('m_'))
 		{
 			return;
@@ -461,7 +464,7 @@ class general_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Apply privacy setting for user to user emails
+	 * Apply privacy setting when sending user to user emails
 	 *
 	 * @param $event
 	 *
@@ -541,7 +544,7 @@ class general_listener implements EventSubscriberInterface
 	 *
 	 * @return array An array of fields the user can view [user id] => [profile field] => true
 	 */
-	private function access_control($user_ids, $fields)
+	private function access_control(array $user_ids, array $fields): array
 	{
 		if (empty($user_ids || empty($fields)))
 		{
@@ -633,11 +636,11 @@ class general_listener implements EventSubscriberInterface
 	/**
 	 * Check if other users can reply to a pm sent to them
 	 *
-	 * @param $user_ids
+	 * @param int[] $user_ids
 	 *
 	 * @return array
 	 */
-	private function reverse_pm_control($user_ids)
+	private function reverse_pm_control(array $user_ids): array
 	{
 		if (empty($user_ids))
 		{

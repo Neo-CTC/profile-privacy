@@ -22,27 +22,27 @@ class install_schema extends migration
 	 *
 	 * @return bool
 	 */
-	public function effectively_installed()
+	public function effectively_installed(): bool
 	{
 		return $this->db_tools->sql_table_exists($this->table_prefix . 'profile_privacy_ext');
 	}
 
 	/**
-	 * Return array of dependencies
+	 * Returns array of dependencies to run beforehand
 	 *
 	 * @return string[]
 	 */
-	public static function depends_on()
+	public static function depends_on(): array
 	{
 		return ['\phpbb\db\migration\data\v320\v320'];
 	}
 
 	/**
-	 * Add a new table
+	 * Add a new table and a few columns. More columns to be added later
 	 *
-	 * @return array Array of schema changes
+	 * @return array[] Array of schema changes
 	 */
-	public function update_schema()
+	public function update_schema(): array
 	{
 		return [
 			'add_tables' => [
@@ -62,9 +62,9 @@ class install_schema extends migration
 	/**
 	 * Drop the table
 	 *
-	 * @return array Array of schema changes
+	 * @return array[] Array of schema changes
 	 */
-	public function revert_schema()
+	public function revert_schema(): array
 	{
 		return [
 			'drop_tables' => [
@@ -76,9 +76,9 @@ class install_schema extends migration
 	/**
 	 * Tell phpbb we want to use a function to fill the database with data
 	 *
-	 * @return array[]
+	 * @return array[] Array of changes to run
 	 */
-	public function update_data()
+	public function update_data(): array
 	{
 		return [
 			['custom', [[$this, 'build_table']]],
@@ -86,12 +86,14 @@ class install_schema extends migration
 	}
 
 	/**
-	 * Add columns to table and then fill with default user data
+	 * Add profile columns to table and add defaults for all users
 	 *
 	 * @return bool
 	 */
-	public function build_table()
+	public function build_table(): bool
 	{
+		$table = $this->table_prefix . 'profile_privacy_ext';
+
 		// Clone profile field columns from field data table to new privacy table
 		$columns = $this->db_tools->sql_list_columns(PROFILE_FIELDS_DATA_TABLE);
 		foreach ($columns as $column)
@@ -100,37 +102,24 @@ class install_schema extends migration
 			{
 				continue;
 			}
-			$this->db_tools->sql_column_add($this->table_prefix . 'profile_privacy_ext', $column, ['UINT', 0]);
+			$this->db_tools->sql_column_add($table, $column, ['UINT', 0]);
 		}
 
-
-		// Get total count of users
-		$sql    = 'SELECT COUNT(user_id) AS total FROM ' . PROFILE_FIELDS_DATA_TABLE;
-		$result = $this->db->sql_query($sql);
-		$count  = $this->db->sql_fetchfield('total', 0, $result);
-
 		// Add default for anonymous user
-		$this->db->sql_multi_insert($this->table_prefix . 'profile_privacy_ext', ['user_id' => 1]);
+		$this->db->sql_multi_insert($table, ['user_id' => 1]);
 
-		// Add defaults for users
-		for ($i = 0; $i < $count; $i += 500)
+		// Get all normal users and...
+		$sql    = 'SELECT user_id FROM ' . USERS_TABLE . ' WHERE user_type != ' . USER_IGNORE;
+		$offset = 0;
+		$limit  = 1000;
+		$result = $this->db->sql_query_limit($sql, $limit, $offset);
+
+		// ...shove into table
+		while ($rows = $this->db->sql_fetchrowset($result))
 		{
-			$sql    = 'SELECT user_id FROM ' . PROFILE_FIELDS_DATA_TABLE;
-			$result = $this->db->sql_query_limit($sql, 500, $i);
-
-			$users = [];
-			while ($row = $this->db->sql_fetchrow($result))
-			{
-				$users[] = [
-					'user_id' => $row['user_id'],
-				];
-			}
-			$this->db->sql_freeresult($result);
-
-			if (!empty($users))
-			{
-				$this->db->sql_multi_insert($this->table_prefix . 'profile_privacy_ext', $users);
-			}
+			$this->db->sql_multi_insert($table, $rows);
+			$offset += $limit;
+			$result = $this->db->sql_query_limit($sql, $limit, $offset);
 		}
 		return true;
 	}
