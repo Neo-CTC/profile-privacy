@@ -448,7 +448,7 @@ class general_listener implements EventSubscriberInterface
 		$user_cache = $event['user_cache'];
 		$user_id    = $event['poster_id'];
 
-		$acl = $this->access_control($user_id, ['pm', 'email']);
+		$acl = $this->access_control([$user_id], ['pm', 'email']);
 
 		if (!isset($acl[$user_id]['pm']))
 		{
@@ -481,7 +481,7 @@ class general_listener implements EventSubscriberInterface
 				return;
 			}
 
-			$acl = $this->access_control($user_id, ['email']);
+			$acl = $this->access_control([$user_id], ['email']);
 			if (!isset($acl[$user_id]))
 			{
 				$sql = 'SELECT username
@@ -514,7 +514,7 @@ class general_listener implements EventSubscriberInterface
 		}
 
 		$row = $event['row'];
-		$acl = $this->access_control($row['user_id'], ['online']);
+		$acl = $this->access_control([$row['user_id']], ['online']);
 		if (!isset($acl[$row['user_id']]))
 		{
 			$which          = 'offline';
